@@ -1,0 +1,61 @@
+
+CREATE DATABASE BancoExemplo;
+
+
+USE BancoExemplo;
+
+
+CREATE TABLE Clientes (
+    IDCliente INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(100),
+    Saldo DECIMAL(10, 2)
+);
+
+
+CREATE TABLE Transacoes (
+    IDTransacao INT AUTO_INCREMENT PRIMARY KEY,
+    IDCliente INT,
+    Valor DECIMAL(10, 2),
+    Tipo ENUM('Deposito', 'Saque'),
+    DataTransacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (IDCliente) REFERENCES Clientes(IDCliente)
+);
+
+
+INSERT INTO Clientes (Nome, Saldo) VALUES
+('João', 1000.00),
+('Maria', 2000.00),
+('Pedro', 1500.00);
+
+
+INSERT INTO Transacoes (IDCliente, Valor, Tipo) VALUES
+(1, 500.00, 'Deposito'),
+(2, 100.00, 'Deposito'),
+(3, 200.00, 'Deposito'),
+(1, 300.00, 'Saque'),
+(2, 50.00, 'Saque');
+
+
+DELIMITER //
+
+CREATE TRIGGER AtualizarSaldo
+AFTER INSERT ON Transacoes
+FOR EACH ROW
+BEGIN
+    DECLARE saldoAtual DECIMAL(10, 2);
+    
+
+    SELECT Saldo INTO saldoAtual FROM Clientes WHERE IDCliente = NEW.IDCliente;
+    
+    
+    IF NEW.Tipo = 'Deposito' THEN
+        UPDATE Clientes SET Saldo = saldoAtual + NEW.Valor WHERE IDCliente = NEW.IDCliente;
+    ELSE
+        UPDATE Clientes SET Saldo = saldoAtual - NEW.Valor WHERE IDCliente = NEW.IDCliente;
+    END IF;
+END//
+
+DELIMITER ;
+
+
+
